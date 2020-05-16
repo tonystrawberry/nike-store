@@ -1,17 +1,19 @@
 {
   "engines": {
-    "node": "10.16.3"
+    "node": "10.16.3",
+    "npm": "6.14.5"
   },
   "name": "nike-store-react",
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
   "scripts": {
+    "build": "concurrently \"cd client && npm run build\" \"cd server && npm run build\"",
+    "clean": "concurrently \"rimraf node_modules\" \"cd client && rimraf node_modules build\" \"cd server && rimraf node_modules build\"",
+    "heroku-postbuild": "npm run build",
     "install": "(cd client && npm install) && (cd server && npm install)",
     "start": "concurrently \"cd client && PORT=3000 npm run start\" \"cd server && PORT=3001 npm run start\"",
-    "build": "concurrently \"cd client && npm run build\" \"cd server && npm run build\"",
-    "start:prod": "cd server && npm run start:prod",
-    "heroku-postbuild": "npm run build"
+    "start:prod": "cd server && npm run start:prod"
   },
   "repository": {
     "type": "git",
@@ -25,6 +27,7 @@
   },
   "homepage": "https://github.com/tonystrawberry/nike-store-react#readme",
   "dependencies": {
-    "concurrently": "^5.2.0"
+    "concurrently": "^5.2.0",
+    "rimraf": "^3.0.2"
   }
 }
