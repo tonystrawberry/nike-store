@@ -17,15 +17,11 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/tonystrawberry/nike-store-react.git"
+    "url": "git+https://github.com/tonystrawberry/nike-store.git"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "bugs": {
-    "url": "https://github.com/tonystrawberry/nike-store-react/issues"
-  },
-  "homepage": "https://github.com/tonystrawberry/nike-store-react#readme",
   "dependencies": {
     "concurrently": "^5.2.0",
     "rimraf": "^3.0.2"
