@@ -12,7 +12,7 @@
     "clean": "concurrently \"rimraf node_modules\" \"cd client && rimraf node_modules build\" \"cd server && rimraf node_modules build\"",
     "heroku-postbuild": "npm run build",
     "install": "(cd client && npm install) && (cd server && npm install)",
-    "start": "concurrently \"cd client && PORT=3000 npm run start\" \"cd server && PORT=3001 npm run start\"",
+    "start": "concurrently \"cd client && PORT=3000 npm run start\" \"cd server && PORT=3001 npm run start\" \"mongod\"",
     "start:prod": "cd server && npm run start:prod"
   },
   "repository": {
