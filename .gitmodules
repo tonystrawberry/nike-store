@@ -1,0 +1,3 @@
+[submodule "nike-store-react"]
+	path = DbConnector
+	url = https://github.com/tonystrawberry/nike-store-react
