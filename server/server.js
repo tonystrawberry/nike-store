@@ -1,6 +1,8 @@
 import bodyParser from 'body-parser';
 import express from 'express';
 import path from 'path';
+import morgan from 'morgan';
+
 require('dotenv').config()
 
 const app = express();
@@ -12,6 +14,7 @@ mongo.connectToServer( function( err, client ) {
 
   app.use(bodyParser.json());
   app.use(bodyParser.urlencoded({extended: false}));
+  app.use(morgan('combined'));
   app.use('/api', apiRoutes);
   app.use(express.static(path.join(__dirname, '../../client/build')));
 
