@@ -3,6 +3,7 @@ import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import config from '../../config/config';
 import authJwt from '../../middlewares/authJwt'
+import mongodb from 'mongodb';
 
 const router = express.Router();
 
@@ -75,11 +76,11 @@ router.delete('/products/:id', (req, res) => {
 
 router.get('/users/:id', (req, res) => {
   let id = req.params.id;
-  mongo.getDb().collection('users').findOne({'_id:': id}, (err, result) => {
+  mongo.getDb().collection('users').findOne({'_id': mongodb.ObjectId(id)}, (err, user) => {
     if (err) {
       return res.status(422).send({errors: [{title: 'User fetch failed. Please try again.', detail: err.message }]})
     }
-    return res.json(result);
+    return res.json(user);
   })
 });
 
@@ -94,15 +95,23 @@ router.post('/users', (req, res) => {
   });
 });
 
-router.put('/users/:id', (req, res) => {
-  let id = req.params.id;
-  let user = req.body;
-  mongo.getDb().collection('users').updateOne({'_id': id}, user, (err, result) => {
+router.put('/users', (req, res) => {
+  let user = req.body.user;
+  let fields = {
+    $set: { fullName: user.fullName, username: user.username, email: user.email }
+  }
+  console.log("user", user);
+  mongo.getDb().collection('users').updateOne({'_id': mongodb.ObjectID(user.id)}, fields, (err, result) => {
     if (err) {
       return res.status(422).send({errors: [{title: 'User update failed. Please try again.', detail: err.message }]})
     }
-    console.log("MONGO LOG - User updated", user);
-    return res.json(user);
+    console.log("MONGO LOG - User updated", result);
+    let token = jwt.sign({ id: user.id }, config.secret, {
+      expiresIn: 86400 // 24 hours
+    });
+    console.log(token);
+    console.log(user);
+    return res.status(200).send({id: user.id, username: user.username, email: user.email, accessToken: token});
   });
 });
 
@@ -110,16 +119,23 @@ router.put('/users/:id', (req, res) => {
 
 let BCRYPT_SALT_ROUNDS = 12;
 router.post('/register', function(req, res) {
+  let fullName = req.body.fullName;
+  let username = req.body.username;
   let email = req.body.email;
   let password = req.body.password;
 
   bcrypt.hash(password, BCRYPT_SALT_ROUNDS)
     .then(function(hashedPassword) {
-      mongo.getDb().collection('users').insertOne({email: email, password: hashedPassword}, (err, user) => {
+      mongo.getDb().collection('users').insertOne({fullName: fullName, username: username, email: email, password: hashedPassword}, (err, response) => {
         if (err) {
           return res.status(422).send({errors: [{title: 'User registration failed. Please try again.', detail: err.message }]})
         }
-        return res.json(user);
+        let user = response.ops[0];
+        let token = jwt.sign({ id: user._id }, config.secret, {
+          expiresIn: 86400 // 24 hours
+        });
+
+        return res.status(200).send({id: user._id, username: user.username, email: user.email, accessToken: token});
       });
     })
     .catch(function(error){
@@ -150,7 +166,7 @@ router.post('/login', function(req, res) {
         expiresIn: 86400 // 24 hours
       });
 
-      return res.status(200).send({email: email, accessToken: token});
+      return res.status(200).send({id: user._id, username: user.username, email: user.email, accessToken: token});
     })
   })
 })
