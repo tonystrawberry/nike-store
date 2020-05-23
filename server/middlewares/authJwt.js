@@ -1,3 +1,5 @@
+import config from '../config/config';
+
 const jwt = require("jsonwebtoken");
 
 let verifyToken = (req, res, next) => {
