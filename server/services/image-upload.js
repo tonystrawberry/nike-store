@@ -20,7 +20,7 @@ const fileFilter = (req, file, cb) => {
 }
  
 const upload = multer({
-  fileFilter,
+  fileFilter: fileFilter,
   storage: multerS3({
     s3: s3,
     bucket: 'totostore',

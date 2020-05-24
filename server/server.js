@@ -16,6 +16,7 @@ const mongo = require('./db/mongodb');
 mongo.connectToServer( function( err, client ) {
   if (err) console.log(err);
 
+  app.use(bodyParser({limit: '50mb'}));
   app.use(bodyParser.json());
   app.use(bodyParser.urlencoded({extended: false}));
   app.use(morgan('combined'));

@@ -1,5 +1,6 @@
 import express from 'express';
 import authJwt from '../../middlewares/authJwt';
+import mongodb from 'mongodb';
 
 const router = express.Router();
 
@@ -34,13 +35,24 @@ router.get('/', (req, res) => {
   });
 
 router.post('/', authJwt.verifyToken, (req, res) => {
-  let products = req.body;
-  mongo.getDb().collection('products').insertMany(products, (err, result) => {
+  singleUpload(req, res, (err) => {
     if (err) {
-      return res.status(422).send({errors: [{title: 'Product add failed. Please try again.', detail: err.message }]})
+      return res.status(422).send({errors: [{title: 'Image upload failed. Please try again.', detail: err.message }]})
     }
-    return res.json(products);
+
+    let product = req.body;
+    product.price = parseInt(product.price);
+    product.imageUrl = req.file.location;
+    mongo.getDb().collection('products').insertOne(product, (err, response) => {
+      if (err) {
+        return res.status(422).send({errors: [{title: 'Product add failed. Please try again.', detail: err.message }]})
+      }
+      let product = response.ops[0];
+      return res.json(product);
+    });
   });
+
+  
 });
 
 router.put('/:id', authJwt.verifyToken, (req, res) => {
@@ -54,12 +66,14 @@ router.put('/:id', authJwt.verifyToken, (req, res) => {
   });
 });
 
-router.delete('/:id', authJwt.verifyToken, (req, res) => {
-  let id = req.params.id;
-  let product = req.body;
-  mongo.getDb().collection('products').deleteOne({'_id': id}, (err, result) => {
+router.delete('/', authJwt.verifyToken, (req, res) => {
+  let id = req.body.id;
+  mongo.getDb().collection('products').deleteOne({'_id': mongodb.ObjectId(id)}, (err, result) => {
     if (err) {
       return res.status(422).send({errors: [{title: 'Product delete failed. Please try again.', detail: err.message }]})
+    }
+    if (result.deletedCount == 0){
+      return res.status(422).send({errors: [{title: 'Product delete failed. Please try again.', detail: "" }]})
     }
     return res.json({id: id});
   });
