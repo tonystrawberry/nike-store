@@ -55,15 +55,42 @@ router.post('/', authJwt.verifyToken, (req, res) => {
   
 });
 
-router.put('/:id', authJwt.verifyToken, (req, res) => {
-  let id = req.params.id;
-  let product = req.body;
-  mongo.getDb().collection('products').updateOne({'_id': id}, product, (err, result) => {
+router.put('/', authJwt.verifyToken, (req, res) => {
+  singleUpload(req, res, (err) => {
     if (err) {
-      return res.status(422).send({errors: [{title: 'Product update failed. Please try again.', detail: err.message }]})
+      return res.status(422).send({errors: [{title: 'Image upload failed. Please try again.', detail: err.message }]})
     }
-    return res.json(product);
+
+    let product = req.body;
+    product.price = parseInt(product.price);
+
+    let setFields = { title: product.title, subtitle1: product.subtitle1, subtitle2: product.subtitle2, description: product.description, price: product.price }
+    if (req.file != undefined){
+      setFields.imageUrl = req.file.location;
+    }
+
+    let fields = {
+      $set: setFields
+    }
+
+    console.log("fields", fields)
+    mongo.getDb().collection('products').findOneAndUpdate({'_id': mongodb.ObjectId(product.id)}, fields, { 'returnOriginal': false }, (err, response) => {
+      if (err) {
+        return res.status(422).send({errors: [{title: 'Product update failed. Please try again.', detail: err.message }]})
+      }
+
+      if (setFields.title != response.value.title ||
+        setFields.subtitle1 != response.value.subtitle1 ||
+        setFields.subtitle2 != response.value.subtitle2 ||
+        setFields.price != response.value.price ||
+        setFields.description != response.value.description ||
+        (setFields.imageUrl != null && response.value.imageUrl != setFields.imageUrl))
+        return res.status(422).send({errors: [{title: 'Product update failed. Please try again.', detail: err.message }]})
+      
+      return res.status(200).send(response.value);
+    });
   });
+
 });
 
 router.delete('/', authJwt.verifyToken, (req, res) => {

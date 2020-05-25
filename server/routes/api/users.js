@@ -1,8 +1,7 @@
 import express from 'express';
-import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import config from '../../config/config';
-import { checkDuplicateUsernameOrEmail } from '../../middlewares/verifyId';
+import { checkDuplicateUsernameOrEmailOnUpdate } from '../../middlewares/verifyId';
 import mongodb from 'mongodb';
 
 const router = express.Router();
@@ -38,19 +37,28 @@ router.post('/', (req, res) => {
   });
 });
 
-router.put('/', checkDuplicateUsernameOrEmail, (req, res) => {
+router.put('/', checkDuplicateUsernameOrEmailOnUpdate, (req, res) => {
   let user = req.body.user;
   let fields = {
-    $set: { fullName: user.fullName, username: user.username, email: user.email }
+    $set: user
   }
-  mongo.getDb().collection('users').updateOne({'_id': mongodb.ObjectId(user.id)}, fields, (err, result) => {
+
+  mongo.getDb().collection('users').findOneAndUpdate({'_id': mongodb.ObjectId(user.id)}, fields, { 'returnOriginal': false }, (err, response) => {
     if (err) {
       return res.status(422).send({errors: [{title: 'User update failed. Please try again.', detail: err.message }]})
     }
+
+    for (let key in user){
+      if (user[key] != response.value[key]){
+        return res.status(422).send({errors: [{title: 'User update failed. Please try again.', detail: err.message }]})
+      }
+    }
+
     let token = jwt.sign({ id: user.id }, config.secret, {
       expiresIn: 86400 // 24 hours
     });
-    return res.status(200).send({id: user.id, username: user.username, email: user.email, accessToken: token});
+
+    return res.status(200).send({id: response.value._id, username: response.value.username, email: response.value.email, accessToken: token});
   });
 });
 
