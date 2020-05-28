@@ -42,7 +42,9 @@ router.post('/', authJwt.verifyToken, (req, res) => {
 
     let product = req.body;
     product.price = parseInt(product.price);
-    product.imageUrl = req.file.location;
+    if (req.file){
+      product.imageUrl = req.file.location;
+    }
     mongo.getDb().collection('products').insertOne(product, (err, response) => {
       if (err) {
         return res.status(422).send({errors: [{title: 'Product add failed. Please try again.', detail: err.message }]})
